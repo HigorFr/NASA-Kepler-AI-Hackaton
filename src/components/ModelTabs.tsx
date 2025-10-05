@@ -13,11 +13,13 @@ type PredictionResult = "A" | "B" | null;
 const ModelTabs = () => {
   const [keplerResult, setKeplerResult] = useState<PredictionResult>(null);
   const [tessResult, setTessResult] = useState<PredictionResult>(null);
+  const [isTessLoading, setIsTessLoading] = useState(false);
   const [k2Result, setK2Result] = useState<PredictionResult>(null);
   const [isKeplerLoading, setIsKeplerLoading] = useState(false);
   const [isK2Loading, setIsK2Loading] = useState(false);
   const k2SessionRef = useRef<ort.InferenceSession | null>(null);
   const keplerSessionRef = useRef<ort.InferenceSession | null>(null);
+  const tessSessionRef = useRef<ort.InferenceSession | null>(null);
 
   const handleKeplerPredict = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,11 +72,53 @@ const ModelTabs = () => {
     }
   };
 
-  const handleTessPredict = (e: React.FormEvent) => {
+  const handleTessPredict = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = Math.random() > 0.5 ? "A" : "B";
-    setTessResult(result);
-    toast.success(`TESS Model Prediction: ${result}`);
+    setIsTessLoading(true);
+    try {
+      if (!tessSessionRef.current) {
+        toast.info('Loading TESS model...');
+        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
+        tessSessionRef.current = await ort.InferenceSession.create('/models/TESS_lightGBM_model.onnx');
+      }
+
+      const form = e.target as HTMLFormElement;
+      const pl_pnum = parseFloat((form.elements.namedItem('pl_pnum') as HTMLInputElement).value);
+      const pl_tranmid = parseFloat((form.elements.namedItem('pl_tranmid') as HTMLInputElement).value);
+      const pl_orbper = parseFloat((form.elements.namedItem('pl_orbper') as HTMLInputElement).value);
+      const pl_trandurh = parseFloat((form.elements.namedItem('pl_trandurh') as HTMLInputElement).value);
+      const pl_trandep = parseFloat((form.elements.namedItem('pl_trandep') as HTMLInputElement).value);
+      const pl_rade = parseFloat((form.elements.namedItem('pl_rade') as HTMLInputElement).value);
+      const pl_eqt = parseFloat((form.elements.namedItem('pl_eqt') as HTMLInputElement).value);
+      const ra = parseFloat((form.elements.namedItem('ra') as HTMLInputElement).value);
+      const st_pmra = parseFloat((form.elements.namedItem('st_pmra') as HTMLInputElement).value);
+      const st_pmdec = parseFloat((form.elements.namedItem('st_pmdec') as HTMLInputElement).value);
+      const st_tmag = parseFloat((form.elements.namedItem('st_tmag') as HTMLInputElement).value);
+      const st_dist = parseFloat((form.elements.namedItem('st_dist') as HTMLInputElement).value);
+      const st_teff = parseFloat((form.elements.namedItem('st_teff') as HTMLInputElement).value);
+      const st_rad = parseFloat((form.elements.namedItem('st_rad') as HTMLInputElement).value);
+
+      const inputData = new Float32Array([
+        pl_pnum, pl_tranmid, pl_orbper, pl_trandurh, pl_trandep,
+        pl_rade, pl_eqt, ra, st_pmra, st_pmdec,
+        st_tmag, st_dist, st_teff, st_rad
+      ]);
+      const inputTensor = new ort.Tensor('float32', inputData, [1, 14]);
+
+      const feeds: Record<string, ort.Tensor> = { float_input: inputTensor };
+      const results = await tessSessionRef.current.run(feeds);
+      const outputKey = Object.keys(results)[0];
+      const raw = (results as any)[outputKey];
+      const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
+      const result: PredictionResult = prediction === 0 ? 'A' : 'B';
+      setTessResult(result);
+      toast.success(`TESS Model Prediction: ${result}`);
+    } catch (error) {
+      console.error('TESS prediction error:', error);
+      toast.error('Failed to run TESS prediction. Check console for details.');
+    } finally {
+      setIsTessLoading(false);
+    }
   };
 
   const handleK2Predict = async (e: React.FormEvent) => {
@@ -218,24 +262,64 @@ const ModelTabs = () => {
             <form onSubmit={handleTessPredict} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="tess-flux">Normalized Flux</Label>
-                  <Input id="tess-flux" type="number" step="0.0001" placeholder="0.0000" required />
+                  <Label htmlFor="pl_pnum">Number of Planets (pl_pnum)</Label>
+                  <Input id="pl_pnum" name="pl_pnum" type="number" step="1" placeholder="1" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tess-depth">Transit Depth (%)</Label>
-                  <Input id="tess-depth" type="number" step="0.001" placeholder="0.000" required />
+                  <Label htmlFor="pl_tranmid">Transit Midpoint (pl_tranmid)</Label>
+                  <Input id="pl_tranmid" name="pl_tranmid" type="number" step="0.0001" placeholder="0.0000" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tess-duration">Transit Duration (hrs)</Label>
-                  <Input id="tess-duration" type="number" step="0.1" placeholder="0.0" required />
+                  <Label htmlFor="pl_orbper">Orbital Period (pl_orbper)</Label>
+                  <Input id="pl_orbper" name="pl_orbper" type="number" step="0.001" placeholder="0.000" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tess-snr">Signal-to-Noise Ratio</Label>
-                  <Input id="tess-snr" type="number" step="0.1" placeholder="0.0" required />
+                  <Label htmlFor="pl_trandurh">Transit Duration (hrs) (pl_trandurh)</Label>
+                  <Input id="pl_trandurh" name="pl_trandurh" type="number" step="0.1" placeholder="0.0" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pl_trandep">Transit Depth (%) (pl_trandep)</Label>
+                  <Input id="pl_trandep" name="pl_trandep" type="number" step="0.0001" placeholder="0.0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pl_rade">Planet Radius (pl_rade)</Label>
+                  <Input id="pl_rade" name="pl_rade" type="number" step="0.01" placeholder="0.00" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pl_eqt">Equilibrium Temperature (pl_eqt)</Label>
+                  <Input id="pl_eqt" name="pl_eqt" type="number" placeholder="0" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ra">Right Ascension (ra)</Label>
+                  <Input id="ra" name="ra" type="number" step="0.0001" placeholder="0.0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="st_pmra">Proper Motion RA (st_pmra)</Label>
+                  <Input id="st_pmra" name="st_pmra" type="number" step="0.0001" placeholder="0.0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="st_pmdec">Proper Motion Dec (st_pmdec)</Label>
+                  <Input id="st_pmdec" name="st_pmdec" type="number" step="0.0001" placeholder="0.0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="st_tmag">TESS Magnitude (st_tmag)</Label>
+                  <Input id="st_tmag" name="st_tmag" type="number" step="0.01" placeholder="0.00" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="st_dist">Distance (parsecs) (st_dist)</Label>
+                  <Input id="st_dist" name="st_dist" type="number" step="0.1" placeholder="0.0" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="st_teff">Effective Temperature (st_teff)</Label>
+                  <Input id="st_teff" name="st_teff" type="number" placeholder="0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="st_rad">Stellar Radius (st_rad)</Label>
+                  <Input id="st_rad" name="st_rad" type="number" step="0.01" placeholder="0.00" required />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                Run Prediction
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isTessLoading}>
+                {isTessLoading ? 'Running...' : 'Run Prediction'}
               </Button>
               {tessResult && (
                 <div className={`p-4 rounded-lg text-center font-bold text-2xl ${tessResult === "A" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>

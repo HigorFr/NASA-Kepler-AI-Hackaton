@@ -64,6 +64,11 @@ const ModelTabs = () => {
 
       const feeds: Record<string, ort.Tensor> = { float_input: inputTensor };
       const results = await keplerSessionRef.current.run(feeds);
+      try {
+        // @ts-ignore
+        window.__lastKeplerResults = results;
+      } catch {}
+      console.log('KEPLER raw results:', results);
 
       const outputKey = Object.keys(results)[0];
       // Try to extract numeric prediction safely
@@ -123,6 +128,11 @@ const ModelTabs = () => {
 
       const feeds: Record<string, ort.Tensor> = { float_input: inputTensor };
       const results = await tessSessionRef.current.run(feeds);
+      try {
+        // @ts-ignore
+        window.__lastTessResults = results;
+      } catch {}
+      console.log('TESS raw results:', results);
       const outputKey = Object.keys(results)[0];
       const raw = (results as any)[outputKey];
       const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
@@ -180,7 +190,12 @@ const ModelTabs = () => {
       // Run inference
       const feeds = { float_input: inputTensor };
       const results = await k2SessionRef.current.run(feeds);
-      
+      try {
+        // @ts-ignore
+        window.__lastK2Results = results;
+      } catch {}
+      console.log('K2 raw results:', results);
+
       // Get prediction (assuming output is named 'output' or 'label')
       const outputKey = Object.keys(results)[0];
       const prediction = results[outputKey].data[0];

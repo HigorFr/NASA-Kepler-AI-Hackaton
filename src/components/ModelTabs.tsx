@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Satellite, Telescope, Target } from "lucide-react";
 import { toast } from "sonner";
+import * as ort from "onnxruntime-web";
 
 type PredictionResult = "A" | "B" | null;
 
@@ -13,6 +14,8 @@ const ModelTabs = () => {
   const [keplerResult, setKeplerResult] = useState<PredictionResult>(null);
   const [tessResult, setTessResult] = useState<PredictionResult>(null);
   const [k2Result, setK2Result] = useState<PredictionResult>(null);
+  const [isK2Loading, setIsK2Loading] = useState(false);
+  const k2SessionRef = useRef<ort.InferenceSession | null>(null);
 
   const handleKeplerPredict = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +32,46 @@ const ModelTabs = () => {
     toast.success(`TESS Model Prediction: ${result}`);
   };
 
-  const handleK2Predict = (e: React.FormEvent) => {
+  const handleK2Predict = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = Math.random() > 0.5 ? "A" : "B";
-    setK2Result(result);
-    toast.success(`K2 Model Prediction: ${result}`);
+    setIsK2Loading(true);
+    
+    try {
+      // Load the ONNX model if not already loaded
+      if (!k2SessionRef.current) {
+        toast.info("Loading K2 model...");
+        k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
+      }
+
+      // Get form values
+      const form = e.target as HTMLFormElement;
+      const brightness = parseFloat((form.elements.namedItem("k2-brightness") as HTMLInputElement).value);
+      const variability = parseFloat((form.elements.namedItem("k2-variability") as HTMLInputElement).value);
+      const distance = parseFloat((form.elements.namedItem("k2-distance") as HTMLInputElement).value);
+      const metallicity = parseFloat((form.elements.namedItem("k2-metallicity") as HTMLInputElement).value);
+
+      // Prepare input tensor (adjust based on your model's expected input shape)
+      const inputData = new Float32Array([brightness, variability, distance, metallicity]);
+      const inputTensor = new ort.Tensor("float32", inputData, [1, 4]);
+
+      // Run inference
+      const feeds = { float_input: inputTensor };
+      const results = await k2SessionRef.current.run(feeds);
+      
+      // Get prediction (assuming output is named 'output' or 'label')
+      const outputKey = Object.keys(results)[0];
+      const prediction = results[outputKey].data[0];
+      
+      // Convert prediction to A or B
+      const result: PredictionResult = prediction === 0 ? "A" : "B";
+      setK2Result(result);
+      toast.success(`K2 Model Prediction: ${result}`);
+    } catch (error) {
+      console.error("K2 prediction error:", error);
+      toast.error("Failed to run K2 prediction. Check console for details.");
+    } finally {
+      setIsK2Loading(false);
+    }
   };
 
   return (
@@ -172,8 +210,8 @@ const ModelTabs = () => {
                   <Input id="k2-metallicity" type="number" step="0.01" placeholder="0.00" required />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                Run Prediction
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isK2Loading}>
+                {isK2Loading ? "Running..." : "Run Prediction"}
               </Button>
               {k2Result && (
                 <div className={`p-4 rounded-lg text-center font-bold text-2xl ${k2Result === "A" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>

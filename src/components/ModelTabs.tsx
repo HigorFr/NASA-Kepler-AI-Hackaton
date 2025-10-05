@@ -68,12 +68,20 @@ const ModelTabs = () => {
       // Run inference
       const feeds = { float_input: inputTensor };
       const results = await k2SessionRef.current.run(feeds);
-      
-      // Get prediction (assuming output is named 'output' or 'label')
-      const outputKey = Object.keys(results)[0];
-      const prediction = results[outputKey].data[0];
-      
-      // Convert prediction to A or B
+
+      // Pega output_label de forma segura
+      const labelOut = results['output_label'];
+      let prediction: number;
+
+      if (labelOut && 'data' in labelOut && labelOut.data.length > 0) {
+        prediction = labelOut.data[0];
+      } else if (typeof labelOut === 'number') {
+        prediction = labelOut;
+      } else {
+        throw new Error("Não foi possível extrair label do modelo. Veja raw results: " + JSON.stringify(results));
+      }
+
+      // Converte para A ou B
       const result: PredictionResult = prediction === 0 ? "A" : "B";
       setK2Result(result);
       toast.success(`K2 Model Prediction: ${result}`);

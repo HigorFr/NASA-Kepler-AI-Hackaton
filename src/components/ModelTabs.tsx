@@ -33,10 +33,12 @@ const ModelTabs = () => {
   // Model file is in public/models -> URL: /models/Kepler_KOI_rf_model.onnx
         keplerSessionRef.current = await ort.InferenceSession.create('/models/Kepler_KOI_rf_model.onnx');
         try {
-          console.debug('KEPLER session inputs:', keplerSessionRef.current.inputNames);
-          console.debug('KEPLER session outputs:', keplerSessionRef.current.outputNames);
+          // Expose session for manual inspection in the browser console
+          // @ts-ignore
+          window.__keplerSession = keplerSessionRef.current;
+          console.log(`KEPLER model loaded — inputs: ${JSON.stringify(keplerSessionRef.current.inputNames)}, outputs: ${JSON.stringify(keplerSessionRef.current.outputNames)}`);
         } catch (e) {
-          console.debug('KEPLER session metadata unavailable', e);
+          console.log('KEPLER session metadata unavailable', e);
         }
       }
 
@@ -87,10 +89,12 @@ const ModelTabs = () => {
         ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
         tessSessionRef.current = await ort.InferenceSession.create('/models/TESS_lightGBM_model.onnx');
         try {
-          console.debug('TESS session inputs:', tessSessionRef.current.inputNames);
-          console.debug('TESS session outputs:', tessSessionRef.current.outputNames);
+          // Expose session for manual inspection in the browser console
+          // @ts-ignore
+          window.__tessSession = tessSessionRef.current;
+          console.log(`TESS model loaded — inputs: ${JSON.stringify(tessSessionRef.current.inputNames)}, outputs: ${JSON.stringify(tessSessionRef.current.outputNames)}`);
         } catch (e) {
-          console.debug('TESS session metadata unavailable', e);
+          console.log('TESS session metadata unavailable', e);
         }
       }
 
@@ -144,6 +148,13 @@ const ModelTabs = () => {
         // Configure ONNX Runtime to use CDN for WASM files
         ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
         k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
+        try {
+          // @ts-ignore
+          window.__k2Session = k2SessionRef.current;
+          console.log(`K2 model loaded — inputs: ${JSON.stringify(k2SessionRef.current.inputNames)}, outputs: ${JSON.stringify(k2SessionRef.current.outputNames)}`);
+        } catch (e) {
+          console.log('K2 session metadata unavailable', e);
+        }
       }
 
       // Get form values

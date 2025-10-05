@@ -162,6 +162,55 @@ const ModelTabs = () => {
           </CardContent>
         </Card>
       </TabsContent>
+      {/* TESS */}
+      <TabsContent value="tess" className="mt-6">
+        <Card>
+          <CardHeader><CardTitle>TESS Model</CardTitle></CardHeader>
+          <CardContent>
+            <form onSubmit={handleTessPredict} className="space-y-4">
+              {Object.keys(tessInputs).map((key) => (
+                <div key={key}>
+                  <Label htmlFor={key}>{key}</Label>
+                  <Input id={key} name={key} type="number" value={tessInputs[key as keyof typeof tessInputs]} onChange={handleChange(setTessInputs)} required />
+                </div>
+              ))}
+              <Button type="submit" disabled={isTessLoading}>
+                {isTessLoading ? "Running..." : "Run Prediction"}
+              </Button>
+              {tessResult && (
+                <div className={`p-4 mt-4 text-center font-bold text-xl rounded-lg ${tessResult === "CANDIDATE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {tessResult}
+                </div>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* K2 */}
+      <TabsContent value="k2" className="mt-6">
+        <Card>
+          <CardHeader><CardTitle>K2 Model</CardTitle></CardHeader>
+          <CardContent>
+            <form onSubmit={handleK2Predict} className="space-y-4">
+              {Object.keys(k2Inputs).map((key) => (
+                <div key={key}>
+                  <Label htmlFor={key}>{key}</Label>
+                  <Input id={key} name={key} type="number" value={k2Inputs[key as keyof typeof k2Inputs]} onChange={handleChange(setK2Inputs)} required />
+                </div>
+              ))}
+              <Button type="submit" disabled={isK2Loading}>
+                {isK2Loading ? "Running..." : "Run Prediction"}
+              </Button>
+              {k2Result && (
+                <div className={`p-4 mt-4 text-center font-bold text-xl rounded-lg ${k2Result === "CANDIDATE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  {k2Result}
+                </div>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      </TabsContent>
     </Tabs>
   );
 };

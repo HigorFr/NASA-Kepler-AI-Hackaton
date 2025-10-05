@@ -61,7 +61,7 @@ const ModelTabs = () => {
       // Try to extract numeric prediction safely
       const raw = (results as any)[outputKey];
       const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
-      const result: PredictionResult = prediction === 0 ? 'A' : 'B';
+      const result: PredictionResult = prediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
       setKeplerResult(result);
       toast.success(`KEPLER Model Prediction: ${result}`);
     } catch (error) {
@@ -110,7 +110,7 @@ const ModelTabs = () => {
       const outputKey = Object.keys(results)[0];
       const raw = (results as any)[outputKey];
       const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
-      const result: PredictionResult = prediction === 0 ? 'A' : 'B';
+      const result: PredictionResult = prediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
       setTessResult(result);
       toast.success(`TESS Model Prediction: ${result}`);
     } catch (error) {
@@ -163,7 +163,7 @@ const ModelTabs = () => {
       const prediction = results[outputKey].data[0];
       
       // Convert prediction to A or B
-      const result: PredictionResult = prediction === 0 ? "A" : "B";
+      const result: PredictionResult = prediction === 0 ? "CANDIDATE" : "NOT CANDIDATE";
       setK2Result(result);
       toast.success(`K2 Model Prediction: ${result}`);
     } catch (error) {

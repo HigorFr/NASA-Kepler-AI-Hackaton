@@ -198,7 +198,12 @@ const ModelTabs = () => {
       {/* KEPLER */}
       <TabsContent value="kepler" className="mt-6">
         <Card>
-          <CardHeader><CardTitle>Kepler Model</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Kepler Model</CardTitle>
+            <CardDescription>
+              <a href="https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=cumulative" target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Get Kepler test data</a>
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             <form onSubmit={handleKeplerPredict} className="space-y-4">
               {Object.keys(keplerInputs).map((key) => (
@@ -222,7 +227,12 @@ const ModelTabs = () => {
       {/* TESS */}
       <TabsContent value="tess" className="mt-6">
         <Card>
-          <CardHeader><CardTitle>TESS Model</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>TESS Model</CardTitle>
+            <CardDescription>
+              <a href="https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=TOI" target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Get TESS (TOI) test data</a>
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             <form onSubmit={handleTessPredict} className="space-y-4">
               {Object.keys(tessInputs).map((key) => (
@@ -247,7 +257,12 @@ const ModelTabs = () => {
       {/* K2 */}
       <TabsContent value="k2" className="mt-6">
         <Card>
-          <CardHeader><CardTitle>K2 Model</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>K2 Model</CardTitle>
+            <CardDescription>
+              <a href="https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=k2pandc" target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Get K2 test data</a>
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             <form onSubmit={handleK2Predict} className="space-y-4">
               {Object.keys(k2Inputs).map((key) => (

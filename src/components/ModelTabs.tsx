@@ -40,6 +40,8 @@ const ModelTabs = () => {
       // Load the ONNX model if not already loaded
       if (!k2SessionRef.current) {
         toast.info("Loading K2 model...");
+        // Configure ONNX Runtime to use CDN for WASM files
+        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
         k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
       }
 

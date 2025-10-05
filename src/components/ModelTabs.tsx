@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef, FormEvent } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,23 @@ import { Satellite, Telescope, Target } from "lucide-react";
 import { toast } from "sonner";
 import * as ort from "onnxruntime-web";
 
-type PredictionResult = "A" | "B" | null;
+// Utility to extract a numeric prediction from ONNX Runtime results
+const extractPrediction = (results: Record<string, ort.Tensor>): number => {
+  const outputKey = Object.keys(results)[0];
+  const raw = (results as any)[outputKey];
+  const data = raw && raw.data;
+  let value: any;
+  if (data && typeof data[0] !== 'undefined') {
+    value = data[0];
+  } else if (typeof raw === 'number') {
+    value = raw;
+  } else {
+    value = raw && (raw.value ?? raw.data ?? raw);
+  }
+  return Number(value);
+};
+
+type PredictionResult = "CANDIDATE" | "NOT CANDIDATE" | null;
 
 const ModelTabs = () => {
   const [keplerResult, setKeplerResult] = useState<PredictionResult>(null);
@@ -24,6 +40,24 @@ const ModelTabs = () => {
   const handleKeplerPredict = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsKeplerLoading(true);
+
+
+const extractPrediction = (results: Record<string, ort.Tensor>): number => {
+    const outputKey = Object.keys(results)[0];
+    const raw = (results as any)[outputKey];
+    const data = raw && raw.data;
+    let value: any;
+    if (data && typeof data[0] !== 'undefined') {
+      value = data[0];
+    } else if (typeof raw === 'number') {
+      value = raw;
+    } else {
+      value = raw && (raw.value ?? raw.data ?? raw);
+    }
+    return Number(value);
+  };
+
+
 
     try {
       if (!keplerSessionRef.current) {
@@ -65,9 +99,8 @@ const ModelTabs = () => {
 
       const outputKey = Object.keys(results)[0];
       // Try to extract numeric prediction safely
-      const raw = (results as any)[outputKey];
-      const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
-      const result: PredictionResult = prediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
+      const prediction = extractPrediction(results);
+      const result: PredictionResult = prediction >= 0.5 ? "CANDIDATE" : "NOT CANDIDATE";
       setKeplerResult(result);
       toast.success(`KEPLER Model Prediction: ${result}`);
     } catch (error) {
@@ -77,6 +110,9 @@ const ModelTabs = () => {
       setIsKeplerLoading(false);
     }
   };
+
+
+
 
   const handleTessPredict = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,8 +157,9 @@ const ModelTabs = () => {
       const results = await tessSessionRef.current.run(feeds);
       const outputKey = Object.keys(results)[0];
       const raw = (results as any)[outputKey];
-      const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
-      const result: PredictionResult = prediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
+
+      const prediction = extractPrediction(results);
+      const result: PredictionResult = prediction >= 0.5 ? "CANDIDATE" : "NOT CANDIDATE";
       setTessResult(result);
       toast.success(`TESS Model Prediction: ${result}`);
     } catch (error) {
@@ -172,10 +209,9 @@ const ModelTabs = () => {
       
       // Get prediction (assuming output is named 'output' or 'label')
       const outputKey = Object.keys(results)[0];
-      const prediction = results[outputKey].data[0];
-      
-      // Convert prediction to A or B
-      const result: PredictionResult = prediction === 0 ? "CANDIDATE" : "NOT CANDIDATE";
+
+      const prediction = extractPrediction(results);
+      const result: PredictionResult = prediction >= 0.5 ? "CANDIDATE" : "NOT CANDIDATE";
       setK2Result(result);
       toast.success(`K2 Model Prediction: ${result}`);
     } catch (error) {
@@ -250,7 +286,7 @@ const ModelTabs = () => {
                 {isKeplerLoading ? 'Running...' : 'Run Prediction'}
               </Button>
               {keplerResult && (
-                <div className={`p-4 rounded-lg text-center font-bold text-2xl ${keplerResult === 'A' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
+                <div className={`p-4 rounded-lg text-center font-bold text-2xl ${keplerResult === 'CANDIDATE' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
                   Prediction: {keplerResult}
                 </div>
               )}
@@ -334,7 +370,7 @@ const ModelTabs = () => {
                 {isTessLoading ? 'Running...' : 'Run Prediction'}
               </Button>
               {tessResult && (
-                <div className={`p-4 rounded-lg text-center font-bold text-2xl ${tessResult === "A" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                <div className={`p-4 rounded-lg text-center font-bold text-2xl ${tessResult === "CANDIDATE" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
                   Prediction: {tessResult}
                 </div>
               )}
@@ -402,7 +438,7 @@ const ModelTabs = () => {
                 {isK2Loading ? "Running..." : "Run Prediction"}
               </Button>
               {k2Result && (
-                <div className={`p-4 rounded-lg text-center font-bold text-2xl ${k2Result === "A" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                <div className={`p-4 rounded-lg text-center font-bold text-2xl ${k2Result === "CANDIDATE" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
                   Prediction: {k2Result}
                 </div>
               )}

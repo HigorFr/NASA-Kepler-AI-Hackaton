@@ -13,7 +13,7 @@ type PredictionResult = "CANDIDATE" | "NOT CANDIDATE" | null;
 const ModelTabs = () => {
   // Estados dos modelos
   const [keplerInputs, setKeplerInputs] = useState({
-    koi_prad: "", koi_period: "", koi_score: "",
+    koi_prad: "", koi_period: "",
     koi_teq: "", koi_depth_log: "", koi_steff: "", koi_duration: ""
   });
   const [tessInputs, setTessInputs] = useState({
@@ -48,7 +48,7 @@ const ModelTabs = () => {
   const keplerLabels: Record<string, string> = {
     koi_prad: "Planetary Radius (Earth radii)",
     koi_period: "Orbital Period (days)",
-    koi_score: "Disposition Score",
+  // koi_score removed: not a feature in the updated model
     koi_teq: "Equilibrium Temperature (K)",
     koi_depth_log: "log(Transit Depth) (ppm)",
     koi_steff: "Stellar Effective Temperature (K)",
@@ -187,11 +187,11 @@ const ModelTabs = () => {
           <div className="p-2 bg-muted rounded">
             <strong>Kepler column mapping example:</strong>
             <div className="text-xs mt-1">
-              koi_prad = Planetary Radius, koi_period = Orbital Period, koi_score = Disposition Score, koi_teq = Equilibrium Temperature, koi_depth_log = log(Transit Depth), koi_steff = Stellar Teff, koi_duration = Transit Duration
+              koi_prad = Planetary Radius, koi_period = Orbital Period, koi_teq = Equilibrium Temperature, koi_depth_log = log(Transit Depth), koi_steff = Stellar Teff, koi_duration = Transit Duration
             </div>
           </div>
           <div className="mt-2 text-xs text-foreground/70">
-            <em>Decision tree model: far-from-seen or random inputs may generate unpredictable results according to the tree path.</em>
+            <em>Decision tree model: far-from-seen or random inputs may generate unpredictable results according to the tree path (Probably CANDIDATE).</em>
           </div>
         </div>
 

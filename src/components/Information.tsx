@@ -81,7 +81,7 @@ const Information = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-primary">
               <Users className="w-5 h-5" />
-              Research Team
+              Development Team
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-muted-foreground">

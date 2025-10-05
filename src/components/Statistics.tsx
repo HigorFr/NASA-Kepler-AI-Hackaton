@@ -6,7 +6,7 @@ const Statistics = () => {
   const models = [
     {
       name: "KEPLER",
-      f1Score: 81.2,
+      f1Score: 69.0,
       recall: 99.0,
       predictions: 6457,
       precision: 99.2,

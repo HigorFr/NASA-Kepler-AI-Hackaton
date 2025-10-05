@@ -45,14 +45,23 @@ const ModelTabs = () => {
 
       // Get form values
       const form = e.target as HTMLFormElement;
-      const brightness = parseFloat((form.elements.namedItem("k2-brightness") as HTMLInputElement).value);
-      const variability = parseFloat((form.elements.namedItem("k2-variability") as HTMLInputElement).value);
-      const distance = parseFloat((form.elements.namedItem("k2-distance") as HTMLInputElement).value);
-      const metallicity = parseFloat((form.elements.namedItem("k2-metallicity") as HTMLInputElement).value);
+      const pl_trandep = parseFloat((form.elements.namedItem("k2-trandep") as HTMLInputElement).value);
+      const pl_tranmid = parseFloat((form.elements.namedItem("k2-tranmid") as HTMLInputElement).value);
+      const dec = parseFloat((form.elements.namedItem("k2-dec") as HTMLInputElement).value);
+      const k2_campaigns_num = parseFloat((form.elements.namedItem("k2-campaigns") as HTMLInputElement).value);
+      const glat = parseFloat((form.elements.namedItem("k2-glat") as HTMLInputElement).value);
+      const disc_year = parseFloat((form.elements.namedItem("k2-disc-year") as HTMLInputElement).value);
+      const sy_pm = parseFloat((form.elements.namedItem("k2-sy-pm") as HTMLInputElement).value);
+      const elat = parseFloat((form.elements.namedItem("k2-elat") as HTMLInputElement).value);
+      const elon = parseFloat((form.elements.namedItem("k2-elon") as HTMLInputElement).value);
+      const sy_plx = parseFloat((form.elements.namedItem("k2-sy-plx") as HTMLInputElement).value);
 
-      // Prepare input tensor (adjust based on your model's expected input shape)
-      const inputData = new Float32Array([brightness, variability, distance, metallicity]);
-      const inputTensor = new ort.Tensor("float32", inputData, [1, 4]);
+      // Prepare input tensor with all 10 features
+      const inputData = new Float32Array([
+        pl_trandep, pl_tranmid, dec, k2_campaigns_num, glat,
+        disc_year, sy_pm, elat, elon, sy_plx
+      ]);
+      const inputTensor = new ort.Tensor("float32", inputData, [1, 10]);
 
       // Run inference
       const feeds = { float_input: inputTensor };
@@ -194,20 +203,44 @@ const ModelTabs = () => {
             <form onSubmit={handleK2Predict} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="k2-brightness">Star Brightness</Label>
-                  <Input id="k2-brightness" type="number" step="0.01" placeholder="0.00" required />
+                  <Label htmlFor="k2-trandep">Transit Depth [%]</Label>
+                  <Input id="k2-trandep" name="k2-trandep" type="number" step="0.001" placeholder="0.000" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="k2-variability">Variability Index</Label>
-                  <Input id="k2-variability" type="number" step="0.001" placeholder="0.000" required />
+                  <Label htmlFor="k2-tranmid">Transit Midpoint [days]</Label>
+                  <Input id="k2-tranmid" name="k2-tranmid" type="number" step="0.001" placeholder="0.000" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="k2-distance">Distance (parsecs)</Label>
-                  <Input id="k2-distance" type="number" step="0.1" placeholder="0.0" required />
+                  <Label htmlFor="k2-dec">Declination [decimal]</Label>
+                  <Input id="k2-dec" name="k2-dec" type="number" step="0.0001" placeholder="0.0000" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="k2-metallicity">Metallicity [Fe/H]</Label>
-                  <Input id="k2-metallicity" type="number" step="0.01" placeholder="0.00" required />
+                  <Label htmlFor="k2-campaigns">K2 Campaigns Number</Label>
+                  <Input id="k2-campaigns" name="k2-campaigns" type="number" placeholder="0" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="k2-glat">Galactic Latitude [deg]</Label>
+                  <Input id="k2-glat" name="k2-glat" type="number" step="0.0001" placeholder="0.0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="k2-disc-year">Discovery Year</Label>
+                  <Input id="k2-disc-year" name="k2-disc-year" type="number" placeholder="2000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="k2-sy-pm">System Proper Motion</Label>
+                  <Input id="k2-sy-pm" name="k2-sy-pm" type="number" step="0.001" placeholder="0.000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="k2-elat">Ecliptic Latitude [deg]</Label>
+                  <Input id="k2-elat" name="k2-elat" type="number" step="0.0001" placeholder="0.0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="k2-elon">Ecliptic Longitude [deg]</Label>
+                  <Input id="k2-elon" name="k2-elon" type="number" step="0.0001" placeholder="0.0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="k2-sy-plx">Parallax [mas]</Label>
+                  <Input id="k2-sy-plx" name="k2-sy-plx" type="number" step="0.001" placeholder="0.000" required />
                 </div>
               </div>
               <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isK2Loading}>

@@ -191,7 +191,7 @@ const ModelTabs = () => {
             </div>
           </div>
           <div className="mt-2 text-xs text-foreground/70">
-            <em>Decision tree model: inputs not seen during training may generate unpredictable results according to the tree path.</em>
+            <em>Decision tree model: far-from-seen or random inputs may generate unpredictable results according to the tree path.</em>
           </div>
         </div>
 

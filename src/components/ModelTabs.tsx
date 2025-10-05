@@ -28,8 +28,8 @@ const ModelTabs = () => {
         toast.info("Loading KEPLER model...");
         // Configure ONNX Runtime WASM paths (CDN) to avoid local wasm loading issues
         ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
-        // Model file served from public/model/xgboostKepler_model.onnx -> URL: /model/xgboostKepler_model.onnx
-        keplerSessionRef.current = await ort.InferenceSession.create('/model/Kepler_KOI_rf_model.onnx');
+  // Model file is in public/models -> URL: /models/Kepler_KOI_rf_model.onnx
+  keplerSessionRef.current = await ort.InferenceSession.create('/models/Kepler_KOI_rf_model.onnx');
       }
 
       const form = e.target as HTMLFormElement;

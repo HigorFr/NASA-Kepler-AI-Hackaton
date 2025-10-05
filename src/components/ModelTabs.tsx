@@ -79,15 +79,48 @@ const ModelTabs = () => {
       const feeds = { float_input: inputTensor };
       const results = await k2SessionRef.current.run(feeds);
 
-      // Pega output_label de forma segura
-      const labelOut = results['output_label'];
-      let prediction: number;
+      // Debug raw results to help troubleshoot different output shapes/names
+      console.debug("K2 raw results:", results);
 
-      if (labelOut && 'data' in labelOut && labelOut.data.length > 0) {
-        prediction = labelOut.data[0];
-      } else if (typeof labelOut === 'number') {
-        prediction = labelOut;
-      } else {
+      // Robustly extract a numeric prediction from the results. Common cases:
+      // - results['output_label'] is a Tensor-like object with .data
+      // - some output is a Tensor-like object
+      // - output is a plain number or an array of numbers
+      let prediction: number | undefined;
+
+      const tryExtract = (val: any): number | undefined => {
+        if (val == null) return undefined;
+        // ONNXRuntime Tensor-like object has a `data` property (TypedArray)
+        if (typeof val === 'object' && 'data' in val && Array.isArray((val as any).data) === false && (val as any).data && (val as any).data.length !== undefined) {
+          // data might be a TypedArray (Float32Array) or regular array-like
+          const d = (val as any).data;
+          if (d.length > 0) return d[0];
+        }
+        // If data is a plain array
+        if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'number') return val[0];
+        // If it's a plain number
+        if (typeof val === 'number') return val;
+        return undefined;
+      };
+
+      // Preferred output name
+      prediction = tryExtract(results['output_label']);
+
+      // Fallback: check other outputs
+      if (prediction === undefined) {
+        for (const k of Object.keys(results)) {
+          if (k === 'output_label') continue;
+          const val = (results as any)[k];
+          const ext = tryExtract(val);
+          if (ext !== undefined) {
+            prediction = ext;
+            console.debug(`Using output key '${k}' for prediction extraction.`);
+            break;
+          }
+        }
+      }
+
+      if (prediction === undefined) {
         throw new Error("Não foi possível extrair label do modelo. Veja raw results: " + JSON.stringify(results));
       }
 

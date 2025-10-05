@@ -31,7 +31,13 @@ const ModelTabs = () => {
         // Configure ONNX Runtime WASM paths (CDN) to avoid local wasm loading issues
         ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
   // Model file is in public/models -> URL: /models/Kepler_KOI_rf_model.onnx
-  keplerSessionRef.current = await ort.InferenceSession.create('/models/Kepler_KOI_rf_model.onnx');
+        keplerSessionRef.current = await ort.InferenceSession.create('/models/Kepler_KOI_rf_model.onnx');
+        try {
+          console.debug('KEPLER session inputs:', keplerSessionRef.current.inputNames);
+          console.debug('KEPLER session outputs:', keplerSessionRef.current.outputNames);
+        } catch (e) {
+          console.debug('KEPLER session metadata unavailable', e);
+        }
       }
 
       const form = e.target as HTMLFormElement;
@@ -80,6 +86,12 @@ const ModelTabs = () => {
         toast.info('Loading TESS model...');
         ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
         tessSessionRef.current = await ort.InferenceSession.create('/models/TESS_lightGBM_model.onnx');
+        try {
+          console.debug('TESS session inputs:', tessSessionRef.current.inputNames);
+          console.debug('TESS session outputs:', tessSessionRef.current.outputNames);
+        } catch (e) {
+          console.debug('TESS session metadata unavailable', e);
+        }
       }
 
       const form = e.target as HTMLFormElement;

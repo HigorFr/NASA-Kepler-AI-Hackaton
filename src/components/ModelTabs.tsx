@@ -76,8 +76,34 @@ const ModelTabs = () => {
       const inputTensor = new ort.Tensor("float32", inputData, [1, 10]);
 
       // Run inference
-      const feeds = { float_input: inputTensor };
-      const results = await k2SessionRef.current.run(feeds);
+      // Use the model's declared input name(s) instead of a hard-coded key.
+      const session = k2SessionRef.current!;
+      // Log available input/output metadata for easier debugging
+      try {
+        console.debug('K2 session input names:', (session as any).inputNames || Object.keys((session as any).inputMetadata || {}));
+        console.debug('K2 session output names:', (session as any).outputNames || Object.keys((session as any).outputMetadata || {}));
+      } catch (err) {
+        console.debug('Could not read session metadata', err);
+      }
+
+      const inputNames = (session as any).inputNames || Object.keys((session as any).inputMetadata || {});
+      const inputKey = inputNames && inputNames.length > 0 ? inputNames[0] : 'float_input';
+      const feeds = { [inputKey]: inputTensor } as Record<string, any>;
+
+      let results: Record<string, any>;
+      try {
+        results = await session.run(feeds);
+      } catch (runErr) {
+        console.warn('Initial run failed, attempting to recreate CPU session and retry run', runErr);
+        // If run fails due to WASM/tensor issues, try to recreate with CPU provider and re-run
+        try {
+          k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx", { executionProviders: ["cpu"] } as any);
+          results = await k2SessionRef.current.run(feeds);
+        } catch (retryErr) {
+          // Re-throw the original error if retry also fails
+          throw retryErr || runErr;
+        }
+      }
 
       // Debug raw results to help troubleshoot different output shapes/names
       console.debug("K2 raw results:", results);

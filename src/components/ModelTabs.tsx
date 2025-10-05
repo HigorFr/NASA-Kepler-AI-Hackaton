@@ -90,15 +90,34 @@ const ModelTabs = () => {
       const inputKey = inputNames && inputNames.length > 0 ? inputNames[0] : 'float_input';
       const feeds = { [inputKey]: inputTensor } as Record<string, any>;
 
+      // Decide which output to request to avoid reading non-tensor outputs
+      const outputNames = (session as any).outputNames || Object.keys((session as any).outputMetadata || {});
+      const preferredOutput = outputNames.includes('output_label') ? 'output_label' : (outputNames.length > 0 ? outputNames[0] : undefined);
+
+      console.debug('Prepared feeds keys:', Object.keys(feeds));
+      console.debug('Input tensor info:', { type: (inputTensor as any).type, dims: (inputTensor as any).dims, length: (inputTensor as any).data?.length });
+      console.debug('Will request output:', preferredOutput);
+
       let results: Record<string, any>;
       try {
-        results = await session.run(feeds);
+        if (preferredOutput) {
+          results = await session.run(feeds, [preferredOutput]);
+        } else {
+          results = await session.run(feeds);
+        }
       } catch (runErr) {
         console.warn('Initial run failed, attempting to recreate CPU session and retry run', runErr);
         // If run fails due to WASM/tensor issues, try to recreate with CPU provider and re-run
         try {
           k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx", { executionProviders: ["cpu"] } as any);
-          results = await k2SessionRef.current.run(feeds);
+          const cpuSession = k2SessionRef.current!;
+          const cpuOutputNames = (cpuSession as any).outputNames || Object.keys((cpuSession as any).outputMetadata || {});
+          const cpuPreferredOutput = cpuOutputNames.includes('output_label') ? 'output_label' : (cpuOutputNames.length > 0 ? cpuOutputNames[0] : undefined);
+          if (cpuPreferredOutput) {
+            results = await cpuSession.run(feeds, [cpuPreferredOutput]);
+          } else {
+            results = await cpuSession.run(feeds);
+          }
         } catch (retryErr) {
           // Re-throw the original error if retry also fails
           throw retryErr || runErr;

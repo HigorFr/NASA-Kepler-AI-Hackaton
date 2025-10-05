@@ -72,7 +72,7 @@ const Information = () => {
             </div>
             <div className="space-y-2">
               <h4 className="font-semibold text-foreground">3. Classification</h4>
-              <p>Receive instant A/B classification for exoplanet candidacy</p>
+              <p>Receive instant CANDIDATE/NOT CANDIDATE classification for exoplanet candidacy based on our models</p>
             </div>
           </CardContent>
         </Card>
@@ -118,25 +118,37 @@ const Information = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-primary">
               <Mail className="w-5 h-5" />
-              Contact Us
+              Training & Data
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-muted-foreground">
-            <div>
-              <p className="font-semibold text-foreground">Email:</p>
-              <p>kepler-research@space.science.edu</p>
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">Research Institution:</p>
-              <p>Space Science Institute</p>
-              <p>Department of Astrophysics</p>
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">Collaboration Inquiries:</p>
-              <p>collaborations@kepler-project.org</p>
-            </div>
+            <p className="font-semibold text-foreground">Notebooks (training & analysis):</p>
+            <ul className="list-disc pl-5">
+              <li><a className="text-primary underline" href="/notebooks/Analisek2Planet.ipynb" download>Download Analisek2Planet.ipynb</a></li>
+              <li><a className="text-primary underline" href="/notebooks/AnaliseKOI.ipynb" download>Download AnaliseKOI.ipynb</a></li>
+              <li><a className="text-primary underline" href="/notebooks/AnaliseTOI.ipynb" download>Download AnaliseTOI.ipynb</a></li>
+            </ul>
+            <p className="mt-2">
+              These notebooks (available in the project's <code>src/assets</code> folder) contain the
+              data preprocessing, feature engineering, model training and basic evaluation scripts
+              used to build the classification models. The training data was sourced from public
+              mission catalogs and light-curve archives for KEPLER, TESS and K2.
+            </p>
+            <p>
+              For reproducibility, see the notebooks for exact data queries, preprocessing steps,
+              and training hyperparameters. If you want a packaged dataset or trained weights,
+              we can provide export instructions.
+
+
+            </p>
+            <p className="mt-2">
+              <span className="font-semibold">Original sources: </span>
+              <a className="text-primary underline" href="https://www.spaceappschallenge.org/2025/challenges/a-world-away-hunting-for-exoplanets-with-ai/?tab=resources" target="_blank" rel="noopener noreferrer">NASA Space Apps Challenge — A World Away: Hunting for Exoplanets with AI (resources)</a>
+            </p>
           </CardContent>
         </Card>
+
+
       </div>
     </div>
   );

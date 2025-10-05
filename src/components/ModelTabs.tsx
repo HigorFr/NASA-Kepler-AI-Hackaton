@@ -10,6 +10,23 @@ import * as ort from "onnxruntime-web";
 
 type PredictionResult = "A" | "B" | null;
 
+// Safely stringify objects that may contain BigInt or TypedArrays
+function safeStringify(obj: any) {
+  return JSON.stringify(obj, (_key, value) => {
+    if (typeof value === 'bigint') {
+      // convert BigInt to string to avoid TypeError
+      return value.toString();
+    }
+    // Typed arrays (Int64Array may contain BigInt depending on runtime)
+    try {
+      if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
+        return Array.from(value as any);
+      }
+    } catch (_) {}
+    return value;
+  });
+}
+
 const ModelTabs = () => {
   const [keplerResult, setKeplerResult] = useState<PredictionResult>(null);
   const [tessResult, setTessResult] = useState<PredictionResult>(null);

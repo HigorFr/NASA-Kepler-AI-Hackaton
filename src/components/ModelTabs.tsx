@@ -14,15 +14,60 @@ const ModelTabs = () => {
   const [keplerResult, setKeplerResult] = useState<PredictionResult>(null);
   const [tessResult, setTessResult] = useState<PredictionResult>(null);
   const [k2Result, setK2Result] = useState<PredictionResult>(null);
+  const [isKeplerLoading, setIsKeplerLoading] = useState(false);
   const [isK2Loading, setIsK2Loading] = useState(false);
   const k2SessionRef = useRef<ort.InferenceSession | null>(null);
+  const keplerSessionRef = useRef<ort.InferenceSession | null>(null);
 
-  const handleKeplerPredict = (e: React.FormEvent) => {
+  const handleKeplerPredict = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock prediction - randomly choose A or B
-    const result = Math.random() > 0.5 ? "A" : "B";
-    setKeplerResult(result);
-    toast.success(`KEPLER Model Prediction: ${result}`);
+    setIsKeplerLoading(true);
+
+    try {
+      if (!keplerSessionRef.current) {
+        toast.info("Loading KEPLER model...");
+        // Configure ONNX Runtime WASM paths (CDN) to avoid local wasm loading issues
+        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
+        // Model file served from public/model/xgboostKepler_model.onnx -> URL: /model/xgboostKepler_model.onnx
+        keplerSessionRef.current = await ort.InferenceSession.create('/model/xgboostKepler_model.onnx');
+      }
+
+      const form = e.target as HTMLFormElement;
+      const koi_prad = parseFloat((form.elements.namedItem('koi_prad') as HTMLInputElement).value);
+      const koi_period = parseFloat((form.elements.namedItem('koi_period') as HTMLInputElement).value);
+      const koi_score = parseFloat((form.elements.namedItem('koi_score') as HTMLInputElement).value);
+      const koi_teq = parseFloat((form.elements.namedItem('koi_teq') as HTMLInputElement).value);
+      const koi_depth_log = parseFloat((form.elements.namedItem('koi_depth_log') as HTMLInputElement).value);
+      const koi_steff = parseFloat((form.elements.namedItem('koi_steff') as HTMLInputElement).value);
+      const koi_duration = parseFloat((form.elements.namedItem('koi_duration') as HTMLInputElement).value);
+
+      const inputData = new Float32Array([
+        koi_prad,
+        koi_period,
+        koi_score,
+        koi_teq,
+        koi_depth_log,
+        koi_steff,
+        koi_duration,
+      ]);
+      const inputTensor = new ort.Tensor('float32', inputData, [1, 7]);
+
+      const feeds: Record<string, ort.Tensor> = { float_input: inputTensor };
+      const results = await keplerSessionRef.current.run(feeds);
+
+      const outputKey = Object.keys(results)[0];
+      // Try to extract numeric prediction safely
+      const raw = (results as any)[outputKey];
+      const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
+      const result: PredictionResult = prediction === 0 ? 'A' : 'B';
+      setKeplerResult(result);
+      toast.success(`KEPLER Model Prediction: ${result}`);
+    } catch (error) {
+      console.error('KEPLER prediction error:', error);
+      toast.error('Failed to run KEPLER prediction. Check console for details.');
+    } finally {
+      setIsKeplerLoading(false);
+    }
   };
 
   const handleTessPredict = (e: React.FormEvent) => {
@@ -117,27 +162,39 @@ const ModelTabs = () => {
             <form onSubmit={handleKeplerPredict} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="kepler-period">Orbital Period (days)</Label>
-                  <Input id="kepler-period" type="number" step="0.001" placeholder="0.000" required />
+                  <Label htmlFor="koi_prad">Planet Radius (koi_prad)</Label>
+                  <Input id="koi_prad" name="koi_prad" type="number" step="0.01" placeholder="0.00" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="kepler-radius">Planet Radius (R⊕)</Label>
-                  <Input id="kepler-radius" type="number" step="0.01" placeholder="0.00" required />
+                  <Label htmlFor="koi_period">Orbital Period (koi_period)</Label>
+                  <Input id="koi_period" name="koi_period" type="number" step="0.001" placeholder="0.000" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="kepler-temp">Stellar Temperature (K)</Label>
-                  <Input id="kepler-temp" type="number" placeholder="0000" required />
+                  <Label htmlFor="koi_score">Disposition Score (koi_score)</Label>
+                  <Input id="koi_score" name="koi_score" type="number" step="0.001" placeholder="0.000" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="kepler-magnitude">Stellar Magnitude</Label>
-                  <Input id="kepler-magnitude" type="number" step="0.01" placeholder="0.00" required />
+                  <Label htmlFor="koi_teq">Equilibrium Temperature (koi_teq)</Label>
+                  <Input id="koi_teq" name="koi_teq" type="number" step="1" placeholder="0" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="koi_depth_log">Transit Depth (log ppm) (koi_depth_log)</Label>
+                  <Input id="koi_depth_log" name="koi_depth_log" type="number" step="0.0001" placeholder="0.0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="koi_steff">Stellar Effective Temperature (koi_steff)</Label>
+                  <Input id="koi_steff" name="koi_steff" type="number" placeholder="0000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="koi_duration">Transit Duration (hrs) (koi_duration)</Label>
+                  <Input id="koi_duration" name="koi_duration" type="number" step="0.1" placeholder="0.0" required />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                Run Prediction
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isKeplerLoading}>
+                {isKeplerLoading ? 'Running...' : 'Run Prediction'}
               </Button>
               {keplerResult && (
-                <div className={`p-4 rounded-lg text-center font-bold text-2xl ${keplerResult === "A" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                <div className={`p-4 rounded-lg text-center font-bold text-2xl ${keplerResult === 'A' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
                   Prediction: {keplerResult}
                 </div>
               )}

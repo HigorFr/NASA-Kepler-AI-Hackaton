@@ -21,6 +21,28 @@ const ModelTabs = () => {
   const keplerSessionRef = useRef<ort.InferenceSession | null>(null);
   const tessSessionRef = useRef<ort.InferenceSession | null>(null);
 
+  // Helper to normalize various model output shapes to a JS number
+  const normalizePrediction = (p: any): number => {
+    try {
+      if (typeof p === 'bigint') return Number(p);
+      if (Array.isArray(p)) return Number(p[0]);
+      if (p && typeof p === 'object') {
+        // ONNX runtime Tensor-like object may have .data
+        if ('data' in p) {
+          const d = p.data;
+          if (Array.isArray(d)) return Number(d[0]);
+          return Number(d);
+        }
+        // fallback: try numeric cast of first element or the object itself
+        if (typeof (p as any)[0] !== 'undefined') return Number((p as any)[0]);
+      }
+      return Number(p);
+    } catch (e) {
+      console.warn('normalizePrediction failed for', p, e);
+      return NaN;
+    }
+  };
+
   const handleKeplerPredict = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsKeplerLoading(true);
@@ -68,7 +90,9 @@ const ModelTabs = () => {
       const raw = (results as any)[outputKey];
   const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
   console.debug('KEPLER raw prediction value:', prediction);
-  const result: PredictionResult = prediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
+  const numericPrediction = normalizePrediction(prediction);
+  console.debug('KEPLER numeric prediction:', numericPrediction);
+  const result: PredictionResult = numericPrediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
       setKeplerResult(result);
       toast.success(`KEPLER Model Prediction: ${result}`);
     } catch (error) {
@@ -124,7 +148,9 @@ const ModelTabs = () => {
       const raw = (results as any)[outputKey];
   const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
   console.debug('TESS raw prediction value:', prediction);
-  const result: PredictionResult = prediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
+  const numericPrediction = normalizePrediction(prediction);
+  console.debug('TESS numeric prediction:', numericPrediction);
+  const result: PredictionResult = numericPrediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
       setTessResult(result);
       toast.success(`TESS Model Prediction: ${result}`);
     } catch (error) {
@@ -175,9 +201,12 @@ const ModelTabs = () => {
       // Get prediction (assuming output is named 'output' or 'label')
   const outputKey = Object.keys(results)[0];
   const prediction = results[outputKey].data[0];
+  
   console.debug('K2 raw prediction value:', prediction);
+  const numericPrediction = normalizePrediction(prediction);
+  console.debug('K2 numeric prediction:', numericPrediction);
   // Convert prediction to A or B
-  const result: PredictionResult = prediction === 0 ? "CANDIDATE" : "NOT CANDIDATE";
+  const result: PredictionResult = numericPrediction === 0 ? "CANDIDATE" : "NOT CANDIDATE";
       setK2Result(result);
       toast.success(`K2 Model Prediction: ${result}`);
     } catch (error) {

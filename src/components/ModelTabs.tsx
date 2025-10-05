@@ -1,4 +1,4 @@
-import React, { useState, useRef, FormEvent } from "react";
+import { useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,22 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Satellite, Telescope, Target } from "lucide-react";
 import { toast } from "sonner";
 import * as ort from "onnxruntime-web";
-
-// Utility to extract a numeric prediction from ONNX Runtime results
-const extractPrediction = (results: Record<string, ort.Tensor>): number => {
-  const outputKey = Object.keys(results)[0];
-  const raw = (results as any)[outputKey];
-  const data = raw && raw.data;
-  let value: any;
-  if (data && typeof data[0] !== 'undefined') {
-    value = data[0];
-  } else if (typeof raw === 'number') {
-    value = raw;
-  } else {
-    value = raw && (raw.value ?? raw.data ?? raw);
-  }
-  return Number(value);
-};
 
 type PredictionResult = "CANDIDATE" | "NOT CANDIDATE" | null;
 
@@ -40,24 +24,6 @@ const ModelTabs = () => {
   const handleKeplerPredict = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsKeplerLoading(true);
-
-
-const extractPrediction = (results: Record<string, ort.Tensor>): number => {
-    const outputKey = Object.keys(results)[0];
-    const raw = (results as any)[outputKey];
-    const data = raw && raw.data;
-    let value: any;
-    if (data && typeof data[0] !== 'undefined') {
-      value = data[0];
-    } else if (typeof raw === 'number') {
-      value = raw;
-    } else {
-      value = raw && (raw.value ?? raw.data ?? raw);
-    }
-    return Number(value);
-  };
-
-
 
     try {
       if (!keplerSessionRef.current) {
@@ -99,8 +65,9 @@ const extractPrediction = (results: Record<string, ort.Tensor>): number => {
 
       const outputKey = Object.keys(results)[0];
       // Try to extract numeric prediction safely
-      const prediction = extractPrediction(results);
-      const result: PredictionResult = prediction >= 0.5 ? "CANDIDATE" : "NOT CANDIDATE";
+      const raw = (results as any)[outputKey];
+      const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
+      const result: PredictionResult = prediction === 1 ? 'CANDIDATE' : 'NOT CANDIDATE';
       setKeplerResult(result);
       toast.success(`KEPLER Model Prediction: ${result}`);
     } catch (error) {
@@ -110,9 +77,6 @@ const extractPrediction = (results: Record<string, ort.Tensor>): number => {
       setIsKeplerLoading(false);
     }
   };
-
-
-
 
   const handleTessPredict = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,9 +121,9 @@ const extractPrediction = (results: Record<string, ort.Tensor>): number => {
       const results = await tessSessionRef.current.run(feeds);
       const outputKey = Object.keys(results)[0];
       const raw = (results as any)[outputKey];
+      const prediction = Number(Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw));
 
-      const prediction = extractPrediction(results);
-      const result: PredictionResult = prediction >= 0.5 ? "CANDIDATE" : "NOT CANDIDATE";
+      const result: PredictionResult = prediction === 1 ? 'CANDIDATE' : 'NOT CANDIDATE';
       setTessResult(result);
       toast.success(`TESS Model Prediction: ${result}`);
     } catch (error) {
@@ -209,9 +173,12 @@ const extractPrediction = (results: Record<string, ort.Tensor>): number => {
       
       // Get prediction (assuming output is named 'output' or 'label')
       const outputKey = Object.keys(results)[0];
+      const prediction = Number(Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw));
 
-      const prediction = extractPrediction(results);
-      const result: PredictionResult = prediction >= 0.5 ? "CANDIDATE" : "NOT CANDIDATE";
+      
+      // Convert prediction to A or B
+      
+      const result: PredictionResult = prediction === 1 ? "CANDIDATE" : "NOT CANDIDATE";
       setK2Result(result);
       toast.success(`K2 Model Prediction: ${result}`);
     } catch (error) {

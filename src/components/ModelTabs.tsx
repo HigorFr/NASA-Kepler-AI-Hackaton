@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useState, useRef } from "react";
+=======
+import { useState, useRef } from "react";
+>>>>>>> 0bcd2c382dc103d9dc63e8182e9ffb94c09aa112
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +14,7 @@ import * as ort from "onnxruntime-web";
 
 type PredictionResult = "CANDIDATE" | "NOT CANDIDATE" | null;
 
+<<<<<<< HEAD
 // Função genérica para extrair valor numérico de tensor
 const extractPrediction = (results: Record<string, ort.Tensor>): number => {
   const outputKey = Object.keys(results)[0];
@@ -20,6 +25,8 @@ const extractPrediction = (results: Record<string, ort.Tensor>): number => {
   return Number(raw?.value ?? raw?.data ?? raw);
 };
 
+=======
+>>>>>>> 0bcd2c382dc103d9dc63e8182e9ffb94c09aa112
 const ModelTabs = () => {
   // Estados de resultados e carregamento
   const [keplerResult, setKeplerResult] = useState<PredictionResult>(null);
@@ -35,6 +42,7 @@ const ModelTabs = () => {
   const tessSessionRef = useRef<ort.InferenceSession | null>(null);
   const k2SessionRef = useRef<ort.InferenceSession | null>(null);
 
+<<<<<<< HEAD
   // Função genérica de predição
   const handlePredict = async (
     e: React.FormEvent,
@@ -44,9 +52,100 @@ const ModelTabs = () => {
     setResult: React.Dispatch<React.SetStateAction<PredictionResult>>,
     setLoading: React.Dispatch<React.SetStateAction<boolean>>
   ) => {
+=======
+  const handleKeplerPredict = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsKeplerLoading(true);
+
+    try {
+      if (!keplerSessionRef.current) {
+        toast.info("Loading KEPLER model...");
+        // Configure ONNX Runtime WASM paths (CDN) to avoid local wasm loading issues
+        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
+  // Model file is in public/models -> URL: /models/Kepler_KOI_rf_model.onnx
+        keplerSessionRef.current = await ort.InferenceSession.create('/models/Kepler_KOI_rf_model.onnx');
+        try {
+          console.debug('KEPLER session inputs:', keplerSessionRef.current.inputNames);
+          console.debug('KEPLER session outputs:', keplerSessionRef.current.outputNames);
+        } catch (e) {
+          console.debug('KEPLER session metadata unavailable', e);
+        }
+      }
+
+      const form = e.target as HTMLFormElement;
+      const koi_prad = parseFloat((form.elements.namedItem('koi_prad') as HTMLInputElement).value);
+      const koi_period = parseFloat((form.elements.namedItem('koi_period') as HTMLInputElement).value);
+      const koi_score = parseFloat((form.elements.namedItem('koi_score') as HTMLInputElement).value);
+      const koi_teq = parseFloat((form.elements.namedItem('koi_teq') as HTMLInputElement).value);
+      const koi_depth_log = parseFloat((form.elements.namedItem('koi_depth_log') as HTMLInputElement).value);
+      const koi_steff = parseFloat((form.elements.namedItem('koi_steff') as HTMLInputElement).value);
+      const koi_duration = parseFloat((form.elements.namedItem('koi_duration') as HTMLInputElement).value);
+
+      const inputData = new Float32Array([
+        koi_prad,
+        koi_period,
+        koi_score,
+        koi_teq,
+        koi_depth_log,
+        koi_steff,
+        koi_duration,
+      ]);
+      const inputTensor = new ort.Tensor('float32', inputData, [1, 7]);
+
+      const feeds: Record<string, ort.Tensor> = { float_input: inputTensor };
+      const results = await keplerSessionRef.current.run(feeds);
+
+      const outputKey = Object.keys(results)[0];
+      // Try to extract numeric prediction safely
+      const raw = (results as any)[outputKey];
+      const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
+      const result: PredictionResult = prediction === 1 ? 'CANDIDATE' : 'NOT CANDIDATE';
+      setKeplerResult(result);
+      toast.success(`KEPLER Model Prediction: ${result}`);
+    } catch (error) {
+      console.error('KEPLER prediction error:', error);
+      toast.error('Failed to run KEPLER prediction. Check console for details.');
+    } finally {
+      setIsKeplerLoading(false);
+    }
+  };
+
+  const handleTessPredict = async (e: React.FormEvent) => {
+>>>>>>> 0bcd2c382dc103d9dc63e8182e9ffb94c09aa112
     e.preventDefault();
     setLoading(true);
 
+<<<<<<< HEAD
+=======
+      const inputData = new Float32Array([
+        pl_pnum, pl_tranmid, pl_orbper, pl_trandurh, pl_trandep,
+        pl_rade, pl_eqt, ra, st_pmra, st_pmdec,
+        st_tmag, st_dist, st_teff, st_rad
+      ]);
+      const inputTensor = new ort.Tensor('float32', inputData, [1, 14]);
+
+      const feeds: Record<string, ort.Tensor> = { float_input: inputTensor };
+      const results = await tessSessionRef.current.run(feeds);
+      const outputKey = Object.keys(results)[0];
+      const raw = (results as any)[outputKey];
+      const prediction = Number(Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw));
+
+      const result: PredictionResult = prediction === 1 ? 'CANDIDATE' : 'NOT CANDIDATE';
+      setTessResult(result);
+      toast.success(`TESS Model Prediction: ${result}`);
+    } catch (error) {
+      console.error('TESS prediction error:', error);
+      toast.error('Failed to run TESS prediction. Check console for details.');
+    } finally {
+      setIsTessLoading(false);
+    }
+  };
+
+  const handleK2Predict = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsK2Loading(true);
+    
+>>>>>>> 0bcd2c382dc103d9dc63e8182e9ffb94c09aa112
     try {
       if (!sessionRef.current) {
         toast.info(`Loading model...`);
@@ -54,6 +153,7 @@ const ModelTabs = () => {
         sessionRef.current = await ort.InferenceSession.create(modelPath);
       }
 
+<<<<<<< HEAD
       const inputTensor = new ort.Tensor("float32", new Float32Array(inputValues), [1, inputValues.length]);
       const results = await sessionRef.current.run({ float_input: inputTensor });
       const prediction = extractPrediction(results);
@@ -63,6 +163,45 @@ const ModelTabs = () => {
     } catch (err) {
       console.error("Prediction error:", err);
       toast.error("Failed to run prediction.");
+=======
+      // Get form values
+      const form = e.target as HTMLFormElement;
+      const pl_trandep = parseFloat((form.elements.namedItem("k2-trandep") as HTMLInputElement).value);
+      const pl_tranmid = parseFloat((form.elements.namedItem("k2-tranmid") as HTMLInputElement).value);
+      const dec = parseFloat((form.elements.namedItem("k2-dec") as HTMLInputElement).value);
+      const k2_campaigns_num = parseFloat((form.elements.namedItem("k2-campaigns") as HTMLInputElement).value);
+      const glat = parseFloat((form.elements.namedItem("k2-glat") as HTMLInputElement).value);
+      const disc_year = parseFloat((form.elements.namedItem("k2-disc-year") as HTMLInputElement).value);
+      const sy_pm = parseFloat((form.elements.namedItem("k2-sy-pm") as HTMLInputElement).value);
+      const elat = parseFloat((form.elements.namedItem("k2-elat") as HTMLInputElement).value);
+      const elon = parseFloat((form.elements.namedItem("k2-elon") as HTMLInputElement).value);
+      const sy_plx = parseFloat((form.elements.namedItem("k2-sy-plx") as HTMLInputElement).value);
+
+      // Prepare input tensor with all 10 features
+      const inputData = new Float32Array([
+        pl_trandep, pl_tranmid, dec, k2_campaigns_num, glat,
+        disc_year, sy_pm, elat, elon, sy_plx
+      ]);
+      const inputTensor = new ort.Tensor("float32", inputData, [1, 10]);
+
+      // Run inference
+      const feeds = { float_input: inputTensor };
+      const results = await k2SessionRef.current.run(feeds);
+      
+      // Get prediction (assuming output is named 'output' or 'label')
+      const outputKey = Object.keys(results)[0];
+      const prediction = Number(Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw));
+
+      
+      // Convert prediction to A or B
+      
+      const result: PredictionResult = prediction === 1 ? "CANDIDATE" : "NOT CANDIDATE";
+      setK2Result(result);
+      toast.success(`K2 Model Prediction: ${result}`);
+    } catch (error) {
+      console.error("K2 prediction error:", error);
+      toast.error("Failed to run K2 prediction. Check console for details.");
+>>>>>>> 0bcd2c382dc103d9dc63e8182e9ffb94c09aa112
     } finally {
       setLoading(false);
     }

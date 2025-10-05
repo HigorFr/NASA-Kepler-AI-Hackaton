@@ -6,23 +6,26 @@ const Statistics = () => {
   const models = [
     {
       name: "KEPLER",
-      accuracy: 94.2,
+      f1Score: 0.81,
+      recall: 1.00,
       predictions: 15234,
-      precision: 92.8,
+      precision: 1.00,
       icon: TrendingUp,
     },
     {
       name: "TESS",
-      accuracy: 96.7,
+      f1Score: 0.85,
+      recall: 0.85,
       predictions: 12891,
-      precision: 95.3,
+      precision: 0.85,
       icon: Target,
     },
     {
       name: "K2",
-      accuracy: 93.5,
+      f1Score: 0.91,
+      recall: 0.92,
       predictions: 18742,
-      precision: 91.9,
+      precision: 0.91,
       icon: Award,
     },
   ];
@@ -49,10 +52,10 @@ const Statistics = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Accuracy</span>
-                    <span className="font-bold text-primary">{model.accuracy}%</span>
+                    <span className="text-muted-foreground">F1-Score</span>
+                    <span className="font-bold text-primary">{model.f1Score}%</span>
                   </div>
-                  <Progress value={model.accuracy} className="h-2" />
+                  <Progress value={model.f1Score} className="h-2" />
                 </div>
                 
                 <div className="space-y-2">
@@ -61,6 +64,14 @@ const Statistics = () => {
                     <span className="font-bold text-primary">{model.precision}%</span>
                   </div>
                   <Progress value={model.precision} className="h-2" />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Recall</span>
+                    <span className="font-bold text-primary">{model.recall}%</span>
+                  </div>
+                  <Progress value={model.recall} className="h-2" />
                 </div>
 
                 <div className="pt-2 border-t">

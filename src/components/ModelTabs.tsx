@@ -40,19 +40,9 @@ const ModelTabs = () => {
       // Load the ONNX model if not already loaded
       if (!k2SessionRef.current) {
         toast.info("Loading K2 model...");
-        // Prefer CPU execution provider to avoid loading WASM binaries in environments
-        // where .wasm files aren't served correctly (common in dev servers).
-        // If you want to use WASM for performance, copy the files from
-        // node_modules/onnxruntime-web/dist/*.wasm into `public/onnxruntime/`
-        // and set `ort.env.wasm.wasmPaths = '/onnxruntime/';` before creating the session.
-        try {
-          k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx", { executionProviders: ["cpu"] } as any);
-        } catch (err) {
-          // If CPU provider creation fails, fall back to default behavior (which will try WASM/webgpu)
-          console.warn("Creating CPU session failed, falling back to default create():", err);
-          // Attempt default create (may try to init WASM). Useful for debugging.
-          k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
-        }
+        // Configure ONNX Runtime to use CDN for WASM files
+        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
+        k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
       }
 
       // Get form values
@@ -76,96 +66,18 @@ const ModelTabs = () => {
       const inputTensor = new ort.Tensor("float32", inputData, [1, 10]);
 
       // Run inference
-      // Use the model's declared input name(s) instead of a hard-coded key.
-      const session = k2SessionRef.current!;
-      // Log available input/output metadata for easier debugging
-      try {
-        console.debug('K2 session input names:', (session as any).inputNames || Object.keys((session as any).inputMetadata || {}));
-        console.debug('K2 session output names:', (session as any).outputNames || Object.keys((session as any).outputMetadata || {}));
-      } catch (err) {
-        console.debug('Could not read session metadata', err);
-      }
+      const feeds = { float_input: inputTensor };
+      const results = await k2SessionRef.current.run(feeds);
 
-      const inputNames = (session as any).inputNames || Object.keys((session as any).inputMetadata || {});
-      const inputKey = inputNames && inputNames.length > 0 ? inputNames[0] : 'float_input';
-      const feeds = { [inputKey]: inputTensor } as Record<string, any>;
+      // Pega output_label de forma segura
+      const labelOut = results['output_label'];
+      let prediction: number;
 
-      // Decide which output to request to avoid reading non-tensor outputs
-      const outputNames = (session as any).outputNames || Object.keys((session as any).outputMetadata || {});
-      const preferredOutput = outputNames.includes('output_label') ? 'output_label' : (outputNames.length > 0 ? outputNames[0] : undefined);
-
-      console.debug('Prepared feeds keys:', Object.keys(feeds));
-      console.debug('Input tensor info:', { type: (inputTensor as any).type, dims: (inputTensor as any).dims, length: (inputTensor as any).data?.length });
-      console.debug('Will request output:', preferredOutput);
-
-      let results: Record<string, any>;
-      try {
-        if (preferredOutput) {
-          results = await session.run(feeds, [preferredOutput]);
-        } else {
-          results = await session.run(feeds);
-        }
-      } catch (runErr) {
-        console.warn('Initial run failed, attempting to recreate CPU session and retry run', runErr);
-        // If run fails due to WASM/tensor issues, try to recreate with CPU provider and re-run
-        try {
-          k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx", { executionProviders: ["cpu"] } as any);
-          const cpuSession = k2SessionRef.current!;
-          const cpuOutputNames = (cpuSession as any).outputNames || Object.keys((cpuSession as any).outputMetadata || {});
-          const cpuPreferredOutput = cpuOutputNames.includes('output_label') ? 'output_label' : (cpuOutputNames.length > 0 ? cpuOutputNames[0] : undefined);
-          if (cpuPreferredOutput) {
-            results = await cpuSession.run(feeds, [cpuPreferredOutput]);
-          } else {
-            results = await cpuSession.run(feeds);
-          }
-        } catch (retryErr) {
-          // Re-throw the original error if retry also fails
-          throw retryErr || runErr;
-        }
-      }
-
-      // Debug raw results to help troubleshoot different output shapes/names
-      console.debug("K2 raw results:", results);
-
-      // Robustly extract a numeric prediction from the results. Common cases:
-      // - results['output_label'] is a Tensor-like object with .data
-      // - some output is a Tensor-like object
-      // - output is a plain number or an array of numbers
-      let prediction: number | undefined;
-
-      const tryExtract = (val: any): number | undefined => {
-        if (val == null) return undefined;
-        // ONNXRuntime Tensor-like object has a `data` property (TypedArray)
-        if (typeof val === 'object' && 'data' in val && Array.isArray((val as any).data) === false && (val as any).data && (val as any).data.length !== undefined) {
-          // data might be a TypedArray (Float32Array) or regular array-like
-          const d = (val as any).data;
-          if (d.length > 0) return d[0];
-        }
-        // If data is a plain array
-        if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'number') return val[0];
-        // If it's a plain number
-        if (typeof val === 'number') return val;
-        return undefined;
-      };
-
-      // Preferred output name
-      prediction = tryExtract(results['output_label']);
-
-      // Fallback: check other outputs
-      if (prediction === undefined) {
-        for (const k of Object.keys(results)) {
-          if (k === 'output_label') continue;
-          const val = (results as any)[k];
-          const ext = tryExtract(val);
-          if (ext !== undefined) {
-            prediction = ext;
-            console.debug(`Using output key '${k}' for prediction extraction.`);
-            break;
-          }
-        }
-      }
-
-      if (prediction === undefined) {
+      if (labelOut && 'data' in labelOut && labelOut.data.length > 0) {
+        prediction = labelOut.data[0];
+      } else if (typeof labelOut === 'number') {
+        prediction = labelOut;
+      } else {
         throw new Error("Não foi possível extrair label do modelo. Veja raw results: " + JSON.stringify(results));
       }
 

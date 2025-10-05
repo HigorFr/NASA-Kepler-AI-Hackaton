@@ -10,23 +10,6 @@ import * as ort from "onnxruntime-web";
 
 type PredictionResult = "A" | "B" | null;
 
-// Safely stringify objects that may contain BigInt or TypedArrays
-function safeStringify(obj: any) {
-  return JSON.stringify(obj, (_key, value) => {
-    if (typeof value === 'bigint') {
-      // convert BigInt to string to avoid TypeError
-      return value.toString();
-    }
-    // Typed arrays (Int64Array may contain BigInt depending on runtime)
-    try {
-      if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
-        return Array.from(value as any);
-      }
-    } catch (_) {}
-    return value;
-  });
-}
-
 const ModelTabs = () => {
   const [keplerResult, setKeplerResult] = useState<PredictionResult>(null);
   const [tessResult, setTessResult] = useState<PredictionResult>(null);
@@ -50,12 +33,10 @@ const ModelTabs = () => {
   // Model file is in public/models -> URL: /models/Kepler_KOI_rf_model.onnx
         keplerSessionRef.current = await ort.InferenceSession.create('/models/Kepler_KOI_rf_model.onnx');
         try {
-          // Expose session for manual inspection in the browser console
-          // @ts-ignore
-          window.__keplerSession = keplerSessionRef.current;
-          console.log(`KEPLER model loaded — inputs: ${JSON.stringify(keplerSessionRef.current.inputNames)}, outputs: ${JSON.stringify(keplerSessionRef.current.outputNames)}`);
+          console.debug('KEPLER session inputs:', keplerSessionRef.current.inputNames);
+          console.debug('KEPLER session outputs:', keplerSessionRef.current.outputNames);
         } catch (e) {
-          console.log('KEPLER session metadata unavailable', e);
+          console.debug('KEPLER session metadata unavailable', e);
         }
       }
 
@@ -81,11 +62,6 @@ const ModelTabs = () => {
 
       const feeds: Record<string, ort.Tensor> = { float_input: inputTensor };
       const results = await keplerSessionRef.current.run(feeds);
-      try {
-        // @ts-ignore
-        window.__lastKeplerResults = results;
-      } catch {}
-      console.log('KEPLER raw results:', results);
 
       const outputKey = Object.keys(results)[0];
       // Try to extract numeric prediction safely
@@ -111,12 +87,10 @@ const ModelTabs = () => {
         ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
         tessSessionRef.current = await ort.InferenceSession.create('/models/TESS_lightGBM_model.onnx');
         try {
-          // Expose session for manual inspection in the browser console
-          // @ts-ignore
-          window.__tessSession = tessSessionRef.current;
-          console.log(`TESS model loaded — inputs: ${JSON.stringify(tessSessionRef.current.inputNames)}, outputs: ${JSON.stringify(tessSessionRef.current.outputNames)}`);
+          console.debug('TESS session inputs:', tessSessionRef.current.inputNames);
+          console.debug('TESS session outputs:', tessSessionRef.current.outputNames);
         } catch (e) {
-          console.log('TESS session metadata unavailable', e);
+          console.debug('TESS session metadata unavailable', e);
         }
       }
 
@@ -145,11 +119,6 @@ const ModelTabs = () => {
 
       const feeds: Record<string, ort.Tensor> = { float_input: inputTensor };
       const results = await tessSessionRef.current.run(feeds);
-      try {
-        // @ts-ignore
-        window.__lastTessResults = results;
-      } catch {}
-      console.log('TESS raw results:', results);
       const outputKey = Object.keys(results)[0];
       const raw = (results as any)[outputKey];
       const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
@@ -175,13 +144,6 @@ const ModelTabs = () => {
         // Configure ONNX Runtime to use CDN for WASM files
         ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
         k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
-        try {
-          // @ts-ignore
-          window.__k2Session = k2SessionRef.current;
-          console.log(`K2 model loaded — inputs: ${JSON.stringify(k2SessionRef.current.inputNames)}, outputs: ${JSON.stringify(k2SessionRef.current.outputNames)}`);
-        } catch (e) {
-          console.log('K2 session metadata unavailable', e);
-        }
       }
 
       // Get form values
@@ -207,12 +169,7 @@ const ModelTabs = () => {
       // Run inference
       const feeds = { float_input: inputTensor };
       const results = await k2SessionRef.current.run(feeds);
-      try {
-        // @ts-ignore
-        window.__lastK2Results = results;
-      } catch {}
-      console.log('K2 raw results:', results);
-
+      
       // Get prediction (assuming output is named 'output' or 'label')
       const outputKey = Object.keys(results)[0];
       const prediction = results[outputKey].data[0];

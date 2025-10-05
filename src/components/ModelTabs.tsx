@@ -88,13 +88,15 @@ const ModelTabs = () => {
       const outputKey = Object.keys(results)[0];
       // Try to extract numeric prediction safely
       const raw = (results as any)[outputKey];
-  const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
-  console.debug('KEPLER raw prediction value:', prediction);
-  const numericPrediction = normalizePrediction(prediction);
-  console.debug('KEPLER numeric prediction:', numericPrediction);
-  const result: PredictionResult = numericPrediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
-      setKeplerResult(result);
-      toast.success(`KEPLER Model Prediction: ${result}`);
+    const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
+    console.debug('KEPLER raw prediction value:', prediction);
+    const numericPrediction = normalizePrediction(prediction);
+    console.debug('KEPLER numeric prediction:', numericPrediction);
+    // keep internal type as 'A'|'B' and map to human label for presentation
+    const result: PredictionResult = numericPrediction === 0 ? 'A' : 'B';
+    setKeplerResult(result);
+    const label = result === 'A' ? 'CANDIDATE' : 'NOT CANDIDATE';
+    toast.success(`KEPLER Model Prediction: ${label}`);
     } catch (error) {
       console.error('KEPLER prediction error:', error);
       toast.error('Failed to run KEPLER prediction. Check console for details.');
@@ -146,13 +148,14 @@ const ModelTabs = () => {
       const results = await tessSessionRef.current.run(feeds);
       const outputKey = Object.keys(results)[0];
       const raw = (results as any)[outputKey];
-  const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
-  console.debug('TESS raw prediction value:', prediction);
-  const numericPrediction = normalizePrediction(prediction);
-  console.debug('TESS numeric prediction:', numericPrediction);
-  const result: PredictionResult = numericPrediction === 0 ? 'CANDIDATE' : 'NOT CANDIDATE';
-      setTessResult(result);
-      toast.success(`TESS Model Prediction: ${result}`);
+    const prediction = Array.isArray(raw?.data) ? raw.data[0] : (raw?.data ?? raw?.[0] ?? raw);
+    console.debug('TESS raw prediction value:', prediction);
+    const numericPrediction = normalizePrediction(prediction);
+    console.debug('TESS numeric prediction:', numericPrediction);
+    const result: PredictionResult = numericPrediction === 0 ? 'A' : 'B';
+    setTessResult(result);
+    const label = result === 'A' ? 'CANDIDATE' : 'NOT CANDIDATE';
+    toast.success(`TESS Model Prediction: ${label}`);
     } catch (error) {
       console.error('TESS prediction error:', error);
       toast.error('Failed to run TESS prediction. Check console for details.');
@@ -200,15 +203,16 @@ const ModelTabs = () => {
       
       // Get prediction (assuming output is named 'output' or 'label')
   const outputKey = Object.keys(results)[0];
-  const prediction = results[outputKey].data[0];
-  
-  console.debug('K2 raw prediction value:', prediction);
-  const numericPrediction = normalizePrediction(prediction);
-  console.debug('K2 numeric prediction:', numericPrediction);
-  // Convert prediction to A or B
-  const result: PredictionResult = numericPrediction === 0 ? "CANDIDATE" : "NOT CANDIDATE";
-      setK2Result(result);
-      toast.success(`K2 Model Prediction: ${result}`);
+    const prediction = results[outputKey].data[0];
+
+    console.debug('K2 raw prediction value:', prediction);
+    const numericPrediction = normalizePrediction(prediction);
+    console.debug('K2 numeric prediction:', numericPrediction);
+    // Convert prediction to internal 'A'/'B' then present human label
+    const result: PredictionResult = numericPrediction === 0 ? 'A' : 'B';
+    setK2Result(result);
+    const label = result === 'A' ? 'CANDIDATE' : 'NOT CANDIDATE';
+    toast.success(`K2 Model Prediction: ${label}`);
     } catch (error) {
       console.error("K2 prediction error:", error);
       toast.error("Failed to run K2 prediction. Check console for details.");

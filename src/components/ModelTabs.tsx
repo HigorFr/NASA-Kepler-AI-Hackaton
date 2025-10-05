@@ -44,6 +44,47 @@ const ModelTabs = () => {
     setter((prev: any) => ({ ...prev, [name]: value }));
   };
 
+  // Human-friendly labels / descriptions for inputs
+  const keplerLabels: Record<string, string> = {
+    koi_prad: "Planetary Radius (Earth radii)",
+    koi_period: "Orbital Period (days)",
+    koi_score: "Disposition Score",
+    koi_teq: "Equilibrium Temperature (K)",
+    koi_depth_log: "log(Transit Depth) (ppm)",
+    koi_steff: "Stellar Effective Temperature (K)",
+    koi_duration: "Transit Duration (hours)",
+  };
+
+  const tessLabels: Record<string, string> = {
+    pl_pnum: "Planet Number",
+    pl_tranmid: "Transit Midpoint (BJD)",
+    pl_orbper: "Orbital Period (days)",
+    pl_trandurh: "Transit Duration (hours)",
+    pl_trandep: "Transit Depth (ppm)",
+    pl_rade: "Planet Radius (Earth radii)",
+    pl_eqt: "Equilibrium Temperature (K)",
+    ra: "Right Ascension (deg)",
+    st_pmra: "Proper Motion RA (mas/yr)",
+    st_pmdec: "Proper Motion Dec (mas/yr)",
+    st_tmag: "TESS Magnitude",
+    st_dist: "Distance (pc)",
+    st_teff: "Stellar Effective Temperature (K)",
+    st_rad: "Stellar Radius (Solar radii)",
+  };
+
+  const k2Labels: Record<string, string> = {
+    trandep: "Transit Depth (ppm)",
+    tranmid: "Transit Midpoint (BJD)",
+    dec: "Declination (deg)",
+    campaigns: "Campaigns",
+    glat: "Galactic Latitude (deg)",
+    disc_year: "Discovery Year",
+    sy_pm: "System Proper Motion (mas/yr)",
+    elat: "Ecliptic Latitude (deg)",
+    elon: "Ecliptic Longitude (deg)",
+    sy_plx: "Parallax (mas)",
+  };
+
   // Função auxiliar para ler valor numérico de tensor
   const extractPrediction = (results: Record<string, ort.Tensor>): number => {
     const outputKey = Object.keys(results)[0];
@@ -62,7 +103,8 @@ const ModelTabs = () => {
         keplerSessionRef.current = await ort.InferenceSession.create('/models/Kepler_KOI_rf_model.onnx');
       }
 
-      const values = Object.values(keplerInputs).map(v => parseFloat(v));
+  // Parse inputs robustly (ensure strings are cast to numbers); empty -> 0
+  const values = Object.values(keplerInputs).map(v => Number(String(v)) || 0);
       const inputTensor = new ort.Tensor('float32', new Float32Array(values), [1, values.length]);
       const results = await keplerSessionRef.current.run({ float_input: inputTensor });
 
@@ -88,7 +130,7 @@ const ModelTabs = () => {
         tessSessionRef.current = await ort.InferenceSession.create('/models/TESS_lightGBM_model.onnx');
       }
 
-      const values = Object.values(tessInputs).map(v => parseFloat(v));
+  const values = Object.values(tessInputs).map(v => Number(String(v)) || 0);
       const inputTensor = new ort.Tensor('float32', new Float32Array(values), [1, values.length]);
       const results = await tessSessionRef.current.run({ float_input: inputTensor });
 
@@ -114,7 +156,7 @@ const ModelTabs = () => {
         k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
       }
 
-      const values = Object.values(k2Inputs).map(v => parseFloat(v));
+  const values = Object.values(k2Inputs).map(v => Number(String(v)) || 0);
       const inputTensor = new ort.Tensor('float32', new Float32Array(values), [1, values.length]);
       const results = await k2SessionRef.current.run({ float_input: inputTensor });
 
@@ -138,6 +180,14 @@ const ModelTabs = () => {
         <TabsTrigger value="k2"><Target className="w-4 h-4 mr-2" />K2</TabsTrigger>
       </TabsList>
 
+      <div className="mt-4 text-sm text-muted-foreground">
+        <div className="mb-2">Inputs are numeric. Empty values will be treated as 0 for the model run.</div>
+        <div className="p-2 bg-muted rounded">
+          <strong>Kepler column mapping example:</strong>
+          <div className="text-xs mt-1">koi_prad = Planetary Radius, koi_period = Orbital Period, koi_score = Disposition Score, koi_teq = Equilibrium Temperature, koi_depth_log = log(Transit Depth), koi_steff = Stellar Teff, koi_duration = Transit Duration</div>
+        </div>
+      </div>
+
       {/* KEPLER */}
       <TabsContent value="kepler" className="mt-6">
         <Card>
@@ -146,8 +196,8 @@ const ModelTabs = () => {
             <form onSubmit={handleKeplerPredict} className="space-y-4">
               {Object.keys(keplerInputs).map((key) => (
                 <div key={key}>
-                  <Label htmlFor={key}>{key}</Label>
-                  <Input id={key} name={key} type="number" value={keplerInputs[key as keyof typeof keplerInputs]} onChange={handleChange(setKeplerInputs)} required />
+                  <Label htmlFor={key}>{keplerLabels[key] ?? key}</Label>
+                  <Input id={key} name={key} type="number" placeholder={keplerLabels[key] ?? key} value={keplerInputs[key as keyof typeof keplerInputs]} onChange={handleChange(setKeplerInputs)} required />
                 </div>
               ))}
               <Button type="submit" disabled={isKeplerLoading}>
@@ -170,8 +220,8 @@ const ModelTabs = () => {
             <form onSubmit={handleTessPredict} className="space-y-4">
               {Object.keys(tessInputs).map((key) => (
                 <div key={key}>
-                  <Label htmlFor={key}>{key}</Label>
-                  <Input id={key} name={key} type="number" value={tessInputs[key as keyof typeof tessInputs]} onChange={handleChange(setTessInputs)} required />
+                  <Label htmlFor={key}>{tessLabels[key] ?? key}</Label>
+                  <Input id={key} name={key} type="number" placeholder={tessLabels[key] ?? key} value={tessInputs[key as keyof typeof tessInputs]} onChange={handleChange(setTessInputs)} required />
                 </div>
               ))}
               <Button type="submit" disabled={isTessLoading}>
@@ -195,8 +245,8 @@ const ModelTabs = () => {
             <form onSubmit={handleK2Predict} className="space-y-4">
               {Object.keys(k2Inputs).map((key) => (
                 <div key={key}>
-                  <Label htmlFor={key}>{key}</Label>
-                  <Input id={key} name={key} type="number" value={k2Inputs[key as keyof typeof k2Inputs]} onChange={handleChange(setK2Inputs)} required />
+                  <Label htmlFor={key}>{k2Labels[key] ?? key}</Label>
+                  <Input id={key} name={key} type="number" placeholder={k2Labels[key] ?? key} value={k2Inputs[key as keyof typeof k2Inputs]} onChange={handleChange(setK2Inputs)} required />
                 </div>
               ))}
               <Button type="submit" disabled={isK2Loading}>

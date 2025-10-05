@@ -180,13 +180,20 @@ const ModelTabs = () => {
         <TabsTrigger value="k2"><Target className="w-4 h-4 mr-2" />K2</TabsTrigger>
       </TabsList>
 
-      <div className="mt-4 text-sm text-muted-foreground">
-        <div className="mb-2">Inputs are numeric. Empty values will be treated as 0 for the model run.</div>
-        <div className="p-2 bg-muted rounded">
-          <strong>Kepler column mapping example:</strong>
-          <div className="text-xs mt-1">koi_prad = Planetary Radius, koi_period = Orbital Period, koi_score = Disposition Score, koi_teq = Equilibrium Temperature, koi_depth_log = log(Transit Depth), koi_steff = Stellar Teff, koi_duration = Transit Duration</div>
+        <div className="mt-4 text-sm text-muted-foreground">
+          <div className="mb-2">
+            Inputs are numeric. Empty values will be treated as 0 for the model run.
+          </div>
+          <div className="p-2 bg-muted rounded">
+            <strong>Kepler column mapping example:</strong>
+            <div className="text-xs mt-1">
+              koi_prad = Planetary Radius, koi_period = Orbital Period, koi_score = Disposition Score, koi_teq = Equilibrium Temperature, koi_depth_log = log(Transit Depth), koi_steff = Stellar Teff, koi_duration = Transit Duration
+            </div>
+          </div>
+          <div className="mt-2 text-xs text-foreground/70">
+            <em>Decision tree model: inputs not seen during training may generate unpredictable results according to the tree path.</em>
+          </div>
         </div>
-      </div>
 
       {/* KEPLER */}
       <TabsContent value="kepler" className="mt-6">

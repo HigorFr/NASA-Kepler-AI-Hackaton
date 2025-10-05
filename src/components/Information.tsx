@@ -1,6 +1,24 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Users, BookOpen, Rocket } from "lucide-react";
 
+// Import the team photos that currently exist in `src/assets`.
+// Only `1.png` exists in the repo workspace; for other members we fall back
+// to an initials avatar so the build doesn't break when images are missing.
+import img1 from "../assets/1.png";
+import img2 from "../assets/2.png";
+import img3 from "../assets/3.png";
+import img4 from "../assets/4.png";
+import img5 from "../assets/5.jpeg";
+
+const imageMap: Record<string, string> = {
+  '1.png': img1,
+  '2.png': img2,
+  '3.png': img3,
+  '4.png': img4,
+  '5.png': img5,
+  '5.jpeg': img5
+};
+
 const Information = () => {
   return (
     <div className="space-y-6">
@@ -19,17 +37,19 @@ const Information = () => {
           </CardHeader>
           <CardContent className="space-y-3 text-muted-foreground">
             <p>
-              KEPLER is an advanced AI-powered platform that leverages machine learning to classify
-              exoplanet candidates from multiple space telescope missions.
+              KEPLER is a student-built, AI-powered platform developed as part of the NASA Space
+              Apps Challenge. Our team designed and trained the classification models used to
+              identify exoplanet candidates across multiple space telescope missions.
             </p>
             <p>
-              Our models process photometric data from NASA's KEPLER, TESS, and K2 missions to
-              identify potential exoplanets with high accuracy and precision.
+              The models process photometric data from NASA's KEPLER, TESS, and K2 missions to
+              identify potential exoplanets with high accuracy and precision—work that the team
+              carried out during the project build and training phase.
             </p>
             <p>
-              By combining data from multiple sources and using state-of-the-art classification
-              algorithms, we help astronomers quickly identify the most promising candidates for
-              further study.
+              We are students from Universidade de São Paulo. This prototype was implemented over
+              a two-day hackathon period during the Nasa Space Apps Challenge and showcases our
+              training and integration work.
             </p>
           </CardContent>
         </Card>
@@ -65,10 +85,32 @@ const Information = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-muted-foreground">
-            <p className="font-semibold text-foreground">Principal Investigators:</p>
-            <p>Dr. Sarah Mitchell - Machine Learning Lead</p>
-            <p>Dr. James Rodriguez - Astrophysics Specialist</p>
-            <p>Dr. Emily Chen - Data Science Engineer</p>
+            <p className="font-semibold text-foreground">Team Members:</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { name: 'Enrico Aranha', unit: 'USP - EACH', img: '1.png', initials: 'EA' },
+                { name: 'Eduardo Almerida', unit: 'USP - EACH', img: '2.png', initials: 'ED' },
+                { name: 'Higor Freitas', unit: 'USP - EACH', img: '3.png', initials: 'HF' },
+                { name: 'Lucas Harada', unit: 'USP - POLI', img: '4.png', initials: 'LH' },
+                { name: 'Nicolas Pinho', unit: 'USP - EACH', img: '5.png', initials: 'NP' }
+              ].map((member) => (
+                <div key={member.name} className="flex items-center gap-3">
+                  {imageMap[member.img] ? (
+                    // Use imported asset URL when available
+                    <img src={imageMap[member.img]} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
+                  ) : (
+                    // Fallback initials avatar when image not available
+                    <div aria-hidden className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">{member.initials}</div>
+                  )}
+                  <div>
+                    <div className="font-semibold">{member.name}</div>
+                    <div className="text-sm text-muted-foreground">{member.unit}</div>
+                  </div>
+                </div>
+              ))}
+            
+            
+            </div>
           </CardContent>
         </Card>
 

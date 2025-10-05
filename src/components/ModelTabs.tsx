@@ -40,9 +40,19 @@ const ModelTabs = () => {
       // Load the ONNX model if not already loaded
       if (!k2SessionRef.current) {
         toast.info("Loading K2 model...");
-        // Configure ONNX Runtime to use CDN for WASM files
-        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.0/dist/';
-        k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
+        // Prefer CPU execution provider to avoid loading WASM binaries in environments
+        // where .wasm files aren't served correctly (common in dev servers).
+        // If you want to use WASM for performance, copy the files from
+        // node_modules/onnxruntime-web/dist/*.wasm into `public/onnxruntime/`
+        // and set `ort.env.wasm.wasmPaths = '/onnxruntime/';` before creating the session.
+        try {
+          k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx", { executionProviders: ["cpu"] } as any);
+        } catch (err) {
+          // If CPU provider creation fails, fall back to default behavior (which will try WASM/webgpu)
+          console.warn("Creating CPU session failed, falling back to default create():", err);
+          // Attempt default create (may try to init WASM). Useful for debugging.
+          k2SessionRef.current = await ort.InferenceSession.create("/models/random_forest_K2_model.onnx");
+        }
       }
 
       // Get form values

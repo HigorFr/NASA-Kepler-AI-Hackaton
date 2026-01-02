@@ -1,6 +1,6 @@
 # NASA Kepler AI Hackathon
 
-[SITE](https://lovable.dev/projects/550e8452-9330-4b8a-8e27-b745b1e58b24?permissionView=main)
+[Demo](https://lovable.dev/projects/550e8452-9330-4b8a-8e27-b745b1e58b24?permissionView=main)
 
 ## Overview
 

@@ -1,73 +1,67 @@
-# Welcome to your Lovable project
+# NASA Kepler AI Hackathon
 
-## Project info
+[SITE](https://lovable.dev/projects/550e8452-9330-4b8a-8e27-b745b1e58b24?permissionView=main)
 
-**URL**: https://lovable.dev/projects/550e8452-9330-4b8a-8e27-b745b1e58b24
+## Overview
 
-## How can I edit this code?
+This project was developed during the NASA Space Apps Challenge hackathon with the goal of applying machine learning techniques to classify celestial objects. Using publicly available NASA datasets, the system predicts whether a given object is likely to be a planet based on observed characteristics.
 
-There are several ways of editing your application.
+The project demonstrates an end-to-end data science workflow, from data analysis and model training to user interaction through a lightweight frontend.
 
-**Use Lovable**
+## Problem Statement
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/550e8452-9330-4b8a-8e27-b745b1e58b24) and start prompting.
+NASA missions such as Kepler and TESS generate large volumes of astronomical data. One of the main challenges is distinguishing real exoplanets from false positives or non-planetary objects.
 
-Changes made via Lovable will be committed automatically to this repo.
+This project addresses this challenge by applying supervised machine learning models to classify celestial objects using structured astronomical data.
 
-**Use your preferred IDE**
+## Machine Learning Models
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+The following models were trained and exported in ONNX format to ensure portability and reproducibility:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Random Forest (Kepler K2)
+  Trained on data from the Kepler K2 mission to classify celestial objects.
 
-Follow these steps:
+- Random Forest (Kepler KOI)
+  Focused on classification of Kepler Objects of Interest (KOI).
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- LightGBM (TESS)
+  Gradient boosting model optimized for performance on TESS mission data.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+These models allow comparison between different datasets and machine learning approaches.
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Datasets
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+The project uses publicly available datasets from NASA missions:
 
-**Edit a file directly in GitHub**
+- Kepler Mission
+- Kepler K2 Extension
+- TESS (Transiting Exoplanet Survey Satellite)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Frontend
 
-**Use GitHub Codespaces**
+A lightweight frontend was developed using Lovable, enabling interaction with the trained models and visualization of prediction results in a user-friendly interface.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Technologies Used
 
-## What technologies are used for this project?
+- Python – data processing and model training
+- Scikit-learn – Random Forest models
+- LightGBM – gradient boosting models
+- ONNX – model export and interoperability
+- Lovable – frontend development
+- NASA Kepler and TESS open datasets
 
-This project is built with:
+## Project Context
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+This project was developed in a hackathon environment, emphasizing rapid prototyping, collaboration, and practical application of machine learning techniques rather than production-level deployment.
 
-## How can I deploy this project?
+## Future Improvements
 
-Simply open [Lovable](https://lovable.dev/projects/550e8452-9330-4b8a-8e27-b745b1e58b24) and click on Share -> Publish.
+- Add detailed evaluation metrics and visualizations
+- Experiment with additional classification models
+- Improve frontend interaction and usability
+- Automate data preprocessing and evaluation pipelines
 
-## Can I connect a custom domain to my Lovable project?
+## Acknowledgments
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- NASA Space Apps Challenge
+- NASA open datasets from the Kepler and TESS missions

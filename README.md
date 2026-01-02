@@ -47,7 +47,7 @@ A lightweight frontend was developed using Lovable, enabling interaction with th
 - Scikit-learn – Random Forest models
 - LightGBM – gradient boosting models
 - ONNX – model export and interoperability
-- Lovable – frontend development
+- Lovable – fast frontend development
 - NASA Kepler and TESS open datasets
 
 ## Project Context
